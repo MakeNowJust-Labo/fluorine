@@ -279,6 +279,57 @@ module F
         "#{last_context_type} #{context_name}"
       end
     end
+
+    class MarkdownContextBuilder < EmptyContextBuilder
+      ContextInfo = Struct.new(:level, :name)
+
+      def initialize
+        @last_paragraph = ""
+        @context = nil
+        @first_line = true
+        @in_frontmatter = false
+      end
+
+      def update_before line
+        first_line, @first_line = @first_line, false
+        case line
+        when /\A\s*\z/
+          @last_paragraph = ""
+          false
+        when /\A\s*(?<level>#+)(?<name>[^#]+)#*/
+          level, name = %w(level name).map { |key| $~[key] }
+          @context = ContextInfo.new level.size, name.strip
+          true
+        when /\A(=\s*){3,}/
+          return false if @last_paragraph.empty?
+          @context = ContextInfo.new 1, @last_paragraph
+          true
+        when /\A(-\s*){3,}/
+          # skip YAML frontmatter
+          if first_line
+            @in_frontmatter = true
+            return false
+          end
+          if @in_frontmatter
+            @in_frontmatter = false
+            return false
+          end
+
+          return false if @last_paragraph.empty?
+          @context = ContextInfo.new 2, @last_paragraph
+          true
+        else
+          @last_paragraph += " " unless @last_paragraph.empty?
+          @last_paragraph = line.strip
+          false
+        end
+      end
+
+      def build
+        return "no context" if @context.nil?
+        "#{?# * @context.level} #{@context.name}"
+      end
+    end
   end
 
   include ContextBuilders
@@ -293,6 +344,9 @@ module F
     ".js" => ContextBuilders::JavaScriptContextBuilder,
     ".rb" => ContextBuilders::RubyContextBuilder,
     ".cr" => ContextBuilders::CrystalContextBuilder,
+    ".md" => ContextBuilders::MarkdownContextBuilder,
+    ".mkd" => ContextBuilders::MarkdownContextBuilder,
+    ".markdown" => ContextBuilders::MarkdownContextBuilder,
   }
 
   class App
