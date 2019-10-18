@@ -229,7 +229,7 @@ module F
         \A(?<indent>\s*)
         (?:
           (?:private|protected|macro)\s+)?
-          (?<type>def|fun|macro|module|class|struct|enum|lib)\s+
+          (?<type>def|fun|macro|module|class|struct|enum|annotation|lib)\s+
           (?<name>(?:self\.|\w+\:\:)*[\w+\-*\/\$<>\[\]?!=`~]*
         )
       }x
