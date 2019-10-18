@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# vim:set ft=ruby fen fdm=syntax fdl=1 fdn=3 fcl=:
+# vim:set ft=ruby:
 
 require "optparse"
 require "pathname"
