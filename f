@@ -430,6 +430,7 @@ module F
 
     private def collect_file path, pwd, &block
       path = path.expand_path pwd
+      return unless valid_path? path
 
       if path.directory?
         path.children.each do |child|
@@ -438,6 +439,12 @@ module F
       elsif path.file?
         yield path
       end
+    end
+
+    private def valid_path? path
+      return false if path.to_s.include? "/.git/"
+      return false if path.to_s.end_with? ".lock"
+      true
     end
 
     def run
@@ -460,10 +467,10 @@ module F
 
     private def run_file path, io
       # TODO: magic number is here!
-      test = io.read(2048)&.force_encoding(@encoding) || ""
+      test = io.read(2048) || ""
       io.rewind
 
-      return unless valid? test
+      return unless valid_content? test
       io.set_encoding(@encoding)
 
       context_builder = get_context_builder path, test
@@ -472,7 +479,6 @@ module F
       line_number = 0
 
       shown_context = false
-      old_context = "no context"
 
       io.each_line(chomp: true) do |line|
         line_number += 1
@@ -487,11 +493,8 @@ module F
 
           unless shown_context
             context = context_builder.build
-            if old_context != context
-              puts "\e[32m#{context}\e[0m"
-              shown_context = true
-              old_context = context
-            end
+            puts "\e[32m#{context}\e[0m"
+            shown_context = true
           end
 
           highlighted = line.gsub(@regexp) do |match|
@@ -507,9 +510,9 @@ module F
       puts if shown_filename
     end
 
-    private def valid? test
+    private def valid_content? test
       # Check whether content encoding is valid.
-      return false unless test.valid_encoding?
+      return false unless (1..3).any? { |i| test[0..-i].force_encoding(@encoding).valid_encoding? }
       # Check whether content is binary rather than text.
       return false if !@text && test.include?("\0")
 
