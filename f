@@ -365,7 +365,7 @@ module F
 
       begin
         @regexp = Regexp.new pattern, ignore_case
-        @regexp = Regexp.new "\\b(?:#{pattern})\\b", ignore_case if wordRegexp
+        @regexp = Regexp.new "\\b(?:#{@regexp})\\b", ignore_case if wordRegexp
       rescue => e
         raise Error.new("invalid regexp: #{pattern.inspect}", show_help: true)
       end
