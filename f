@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# vim:set ft=ruby:
 
 require "optparse"
 require "pathname"
